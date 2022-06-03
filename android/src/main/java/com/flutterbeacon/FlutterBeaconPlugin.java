@@ -1,14 +1,24 @@
 package com.flutterbeacon;
 
 import android.app.Activity;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.RemoteException;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 
 import org.altbeacon.beacon.BeaconManager;
 import org.altbeacon.beacon.BeaconParser;
+import org.altbeacon.beacon.MonitorNotifier;
+
+import java.util.Map;
 
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
 import io.flutter.embedding.engine.plugins.activity.ActivityAware;
@@ -54,6 +64,7 @@ public class FlutterBeaconPlugin implements FlutterPlugin, ActivityAware, Method
 
   }
 
+
   public static void registerWith(Registrar registrar) {
     final FlutterBeaconPlugin instance = new FlutterBeaconPlugin();
     instance.setupChannels(registrar.messenger(), registrar.activity());
@@ -74,7 +85,7 @@ public class FlutterBeaconPlugin implements FlutterPlugin, ActivityAware, Method
   @Override
   public void onAttachedToActivity(@NonNull ActivityPluginBinding binding) {
     this.activityPluginBinding = binding;
-
+    Log.d("BEACON","onAttachedToActivity");
     setupChannels(flutterPluginBinding.getBinaryMessenger(), binding.getActivity());
   }
 
@@ -153,10 +164,43 @@ public class FlutterBeaconPlugin implements FlutterPlugin, ActivityAware, Method
     activityPluginBinding = null;
   }
 
+
   @Override
   public void onMethodCall(@NonNull MethodCall call, @NonNull final Result result) {
+    if (call.method.equals("enableBackground")) {
+      boolean enable = call.argument("enabled");
+
+        if (enable && !beaconManager.isAnyConsumerBound()) {
+          final BackgroundSettings settings = BackgroundSettings.fromMap((Map<String,Object>) call.arguments);
+
+          Notification.Builder builder = new Notification.Builder(flutterPluginBinding.getApplicationContext())
+                  .setContentTitle(settings.foregroundNotification.notificationTitle)
+                  .setContentText(settings.foregroundNotification.notificationMessage)
+                  .setOnlyAlertOnce(true)
+                  .setSmallIcon(flutterPluginBinding.getApplicationContext().getResources().getIdentifier(settings.foregroundNotification.icon,"drawable",flutterPluginBinding.getApplicationContext().getPackageName()));
+
+          // create notification channel
+          if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.O)
+          {
+            NotificationChannel notificationChannel= new NotificationChannel(settings.foregroundNotification.channelId,settings.foregroundNotification.channelName, NotificationManager.IMPORTANCE_LOW);
+            NotificationManager notificationManager= (NotificationManager) flutterPluginBinding.getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
+            notificationManager.createNotificationChannel(notificationChannel);
+            builder.setChannelId(notificationChannel.getId());
+          }
+
+          beaconManager.enableForegroundServiceScanning(builder.build(), 456);
+          beaconManager.setEnableScheduledScanJobs(false);
+          beaconManager.setBackgroundBetweenScanPeriod((long) settings.backgroundScanPeriod.backgroundBetweenScanPeriod);
+          beaconManager.setBackgroundScanPeriod((long) settings.backgroundScanPeriod.backgroundScanPeriod);
+        }
+      result.success(true);
+      return;
+    }
+
     if (call.method.equals("initialize")) {
       if (beaconManager != null && !beaconManager.isBound(beaconScanner.beaconConsumer)) {
+        Log.d("BEACON","initialize");
+
         this.flutterResult = result;
         this.beaconManager.bind(beaconScanner.beaconConsumer);
 
@@ -277,6 +321,7 @@ public class FlutterBeaconPlugin implements FlutterPlugin, ActivityAware, Method
     }
 
     if (call.method.equals("close")) {
+      Log.d("BEACON","close");
       if (beaconManager != null) {
         beaconScanner.stopRanging();
         beaconManager.removeAllRangeNotifiers();

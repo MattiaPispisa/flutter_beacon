@@ -1,7 +1,7 @@
-package com.flutterbeaconexample
+package com.example
 
+import com.flutterbeacon.FlutterBeaconPlugin
 import io.flutter.embedding.android.FlutterActivity
-import com.flutterbeacon.FlutterBeaconPlugin;
 
 class MainActivity: FlutterActivity() {
 }

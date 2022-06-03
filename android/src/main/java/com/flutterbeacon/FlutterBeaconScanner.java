@@ -1,9 +1,14 @@
 package com.flutterbeacon;
 
 import android.app.Activity;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.os.Build;
 import android.os.RemoteException;
 import android.os.Looper;
 import android.os.Handler;
@@ -214,6 +219,7 @@ class FlutterBeaconScanner {
   }
 
   private final MonitorNotifier monitorNotifier = new MonitorNotifier() {
+
     @Override
     public void didEnterRegion(Region region) {
       if (eventSinkMonitoring != null) {

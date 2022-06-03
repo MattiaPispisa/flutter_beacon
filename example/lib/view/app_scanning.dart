@@ -35,11 +35,8 @@ class _TabScanningState extends State<TabScanning> {
 
   initScanBeacon() async {
     await flutterBeacon.initializeScanning;
-    if (!controller.authorizationStatusOk ||
-        !controller.locationServiceEnabled ||
-        !controller.bluetoothEnabled) {
-      print(
-          'RETURNED, authorizationStatusOk=${controller.authorizationStatusOk}, '
+    if (!controller.authorizationStatusOk || !controller.locationServiceEnabled || !controller.bluetoothEnabled) {
+      print('RETURNED, authorizationStatusOk=${controller.authorizationStatusOk}, '
           'locationServiceEnabled=${controller.locationServiceEnabled}, '
           'bluetoothEnabled=${controller.bluetoothEnabled}');
       return;
@@ -47,7 +44,7 @@ class _TabScanningState extends State<TabScanning> {
     final regions = <Region>[
       Region(
         identifier: 'Cubeacon',
-        proximityUUID: 'CB10023F-A318-3394-4199-A8730C7C1AEC',
+        proximityUUID: '00000000-0000-0000-0000-000000000000',
       ),
       Region(
         identifier: 'BeaconType2',
@@ -62,8 +59,7 @@ class _TabScanningState extends State<TabScanning> {
       }
     }
 
-    _streamRanging =
-        flutterBeacon.ranging(regions).listen((RangingResult result) {
+    _streamRanging = flutterBeacon.ranging(regions).listen((RangingResult result) {
       print(result);
       if (mounted) {
         setState(() {

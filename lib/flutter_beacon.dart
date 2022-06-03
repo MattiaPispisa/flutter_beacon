@@ -12,6 +12,8 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
+import 'beacon/background_service.dart';
+
 part 'beacon/authorization_status.dart';
 part 'beacon/beacon.dart';
 part 'beacon/beacon_broadcast.dart';
@@ -28,26 +30,21 @@ class FlutterBeacon {
   FlutterBeacon._internal();
 
   /// Method Channel used to communicate to native code.
-  static const MethodChannel _methodChannel =
-      const MethodChannel('flutter_beacon');
+  static const MethodChannel _methodChannel = const MethodChannel('flutter_beacon');
 
   /// Event Channel used to communicate to native code ranging beacons.
-  static const EventChannel _rangingChannel =
-      EventChannel('flutter_beacon_event');
+  static const EventChannel _rangingChannel = EventChannel('flutter_beacon_event');
 
   /// Event Channel used to communicate to native code monitoring beacons.
-  static const EventChannel _monitoringChannel =
-      EventChannel('flutter_beacon_event_monitoring');
+  static const EventChannel _monitoringChannel = EventChannel('flutter_beacon_event_monitoring');
 
   /// Event Channel used to communicate to native code to checking
   /// for bluetooth state changed.
-  static const EventChannel _bluetoothStateChangedChannel =
-      EventChannel('flutter_bluetooth_state_changed');
+  static const EventChannel _bluetoothStateChangedChannel = EventChannel('flutter_bluetooth_state_changed');
 
   /// Event Channel used to communicate to native code to checking
   /// for bluetooth state changed.
-  static const EventChannel _authorizationStatusChangedChannel =
-      EventChannel('flutter_authorization_status_changed');
+  static const EventChannel _authorizationStatusChangedChannel = EventChannel('flutter_authorization_status_changed');
 
   /// This information does not change from call to call. Cache it.
   Stream<BluetoothState>? _onBluetoothState;
@@ -86,6 +83,19 @@ class FlutterBeacon {
     return result == 1;
   }
 
+  Future<bool> setBackgroundService(
+    bool enableBackground,
+    BackgroundServiceSettings settings,
+  ) async {
+    final result = await _methodChannel.invokeMethod('enableBackground', settings.toMap());
+
+    if (result is bool) {
+      return result;
+    }
+
+    return result == 1;
+  }
+
   /// Set the default AuthorizationStatus to use in requesting location authorization.
   /// For iOS, this can be either [AuthorizationStatus.whenInUse] or [AuthorizationStatus.always].
   /// For Android, this is not used.
@@ -93,10 +103,8 @@ class FlutterBeacon {
   /// This method should be called very early to have an effect,
   /// before any of the other initializeScanning or authorizationStatus getters.
   ///
-  Future<bool> setLocationAuthorizationTypeDefault(
-      AuthorizationStatus authorizationStatus) async {
-    return await _methodChannel.invokeMethod(
-        'setLocationAuthorizationTypeDefault', authorizationStatus.value);
+  Future<bool> setLocationAuthorizationTypeDefault(AuthorizationStatus authorizationStatus) async {
+    return await _methodChannel.invokeMethod('setLocationAuthorizationTypeDefault', authorizationStatus.value);
   }
 
   /// Check for the latest [AuthorizationStatus] from device.
@@ -109,8 +117,7 @@ class FlutterBeacon {
 
   /// Return `true` when location service is enabled, otherwise `false`.
   Future<bool> get checkLocationServicesIfEnabled async {
-    final result =
-        await _methodChannel.invokeMethod('checkLocationServicesIfEnabled');
+    final result = await _methodChannel.invokeMethod('checkLocationServicesIfEnabled');
 
     if (result is bool) {
       return result;
@@ -180,14 +187,12 @@ class FlutterBeacon {
 
   /// Customize duration of the beacon scan on the Android Platform.
   Future<bool> setScanPeriod(int scanPeriod) async {
-    return await _methodChannel
-        .invokeMethod('setScanPeriod', {"scanPeriod": scanPeriod});
+    return await _methodChannel.invokeMethod('setScanPeriod', {"scanPeriod": scanPeriod});
   }
 
   /// Customize duration spent not scanning between each scan cycle on the Android Platform.
   Future<bool> setBetweenScanPeriod(int scanPeriod) async {
-    return await _methodChannel.invokeMethod(
-        'setBetweenScanPeriod', {"betweenScanPeriod": scanPeriod});
+    return await _methodChannel.invokeMethod('setBetweenScanPeriod', {"betweenScanPeriod": scanPeriod});
   }
 
   /// Close scanning API.
@@ -206,9 +211,8 @@ class FlutterBeacon {
   /// This will fires [RangingResult] whenever the iBeacons in range.
   Stream<RangingResult> ranging(List<Region> regions) {
     final list = regions.map((region) => region.toJson).toList();
-    final Stream<RangingResult> onRanging = _rangingChannel
-        .receiveBroadcastStream(list)
-        .map((dynamic event) => RangingResult.from(event));
+    final Stream<RangingResult> onRanging =
+        _rangingChannel.receiveBroadcastStream(list).map((dynamic event) => RangingResult.from(event));
     return onRanging;
   }
 
@@ -217,9 +221,8 @@ class FlutterBeacon {
   /// This will fires [MonitoringResult] whenever the iBeacons in range.
   Stream<MonitoringResult> monitoring(List<Region> regions) {
     final list = regions.map((region) => region.toJson).toList();
-    final Stream<MonitoringResult> onMonitoring = _monitoringChannel
-        .receiveBroadcastStream(list)
-        .map((dynamic event) => MonitoringResult.from(event));
+    final Stream<MonitoringResult> onMonitoring =
+        _monitoringChannel.receiveBroadcastStream(list).map((dynamic event) => MonitoringResult.from(event));
     return onMonitoring;
   }
 
@@ -228,9 +231,8 @@ class FlutterBeacon {
   /// This will fires [BluetoothState] whenever bluetooth state changed.
   Stream<BluetoothState> bluetoothStateChanged() {
     if (_onBluetoothState == null) {
-      _onBluetoothState = _bluetoothStateChangedChannel
-          .receiveBroadcastStream()
-          .map((dynamic event) => BluetoothState.parse(event));
+      _onBluetoothState =
+          _bluetoothStateChangedChannel.receiveBroadcastStream().map((dynamic event) => BluetoothState.parse(event));
     }
     return _onBluetoothState!;
   }
