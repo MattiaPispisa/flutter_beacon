@@ -143,6 +143,33 @@ _streamMonitoring = flutterBeacon.monitoring(regions).listen((MonitoringResult r
 _streamMonitoring.cancel();
 ```
 
+## Add foreground service
+Add in `AndroidManifest.xml`: 
+```xml
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+```
+Call in `main`:
+
+```dart
+await flutterBeacon.setBackgroundService(
+    true,
+    const BackgroundServiceSettings(
+      enabled: true,
+      foregroundNotification: ForegroundNotification(
+          channelId: NOTIFICATION_CHANNEL_ID,
+          channelName: NOTIFICATION_CHANNEL_NAME,
+          icon: NOTIFICATION_ICON,
+          notificationTitle: NOTIFICATION_TITLE,
+          notificationMessage: NOTIFICATION_MESSAGE,
+      ),
+      backgroundScanPeriod: BackgroundScanPeriod(
+          backgroundBetweenScanPeriod: BETWEEN_SCAN_PERIOD,
+          backgroundScanPeriod: SCAN_PERIOD
+      )
+    ),
+  ); 
+```
+
 ## Under the hood
 
 * iOS uses native Framework [CoreLocation](https://developer.apple.com/documentation/corelocation/)
